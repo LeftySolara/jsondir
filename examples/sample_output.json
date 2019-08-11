@@ -1,0 +1,19 @@
+{
+    "type": "directory",
+    "name": "/home/jalen",
+    "children": [
+        {
+            "type": "symbolic link",
+            "name": "bin",
+            "target": "/home/jalen/dots/bin/bin"
+        },
+        {
+            "type": "file",
+            "name": ".Xauthority"
+        },
+        {
+            "type": "file",
+            "name": ".taskrc"
+        }
+    ]
+}
