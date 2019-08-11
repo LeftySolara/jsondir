@@ -148,17 +148,46 @@ def print_file(path, tab_count):
         print(" " * TAB_SIZE * tab_count + info_str)
 
 
+def print_directory(path, show_hidden=False):
+    """Display information for each file in the given directory.
+    
+    Parameters
+    ----------
+    path : pathlib.Path object
+        The directory to show information for.
+        
+    show_hidden : bool
+        Whether to include files whose names start with "."
+
+    """
+
+    if show_hidden:
+        children = [child for child in path.iterdir()]
+    else:
+        children = [child for child in path.iterdir() if not child.name.startswith('.')]
+
+    children.sort(key=lambda child: child.name.lower().strip('.'))
+
+    for child in children:
+        print_file(child, 0)
+        print()
+
+
 def main():
     args = process_args()
 
     for filename in args.files:
+        path = pathlib.Path(filename)
+
         try:
-            path = pathlib.Path(filename)
             print()
-            print_file(path, 0)
+            if path.is_dir():
+                print_directory(path, args.all)
+            else:
+                print_file(path, 0)
         except FileNotFoundError:
-            print("{}: No such file or directory.".format(filename))
+            print("{}: No such file or directory.")
+
 
 if __name__ == "__main__":
     main()
-
