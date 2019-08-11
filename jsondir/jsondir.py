@@ -1,8 +1,10 @@
+import argparse
 import stat
 import pathlib
 from enum import Enum, unique, auto
 
 
+@unique
 class FileType(Enum):
     """Unix file types"""
 
@@ -28,9 +30,54 @@ class FileType(Enum):
         return cls.UNKNOWN
 
 
-class DirObject:
-    """Information about a file or directory."""
+def process_args():
+    """
+    Specify and parse command line arguments.
 
-    def __init__(self, path):
-        self.path = path.name
-        self.type = FileType.get_file_type(path)
+    Returns
+    -------
+    namespace : argparse.Namespace
+        Populated namespace containing argument attributes.
+
+    """
+
+    parser = argparse.ArgumentParser(
+        prog="jsondir",
+        description="Display directory structure in JSON format" \
+            " or create directory structure from JSON file.",
+        usage="%(prog)s [OPTION]... [FILE]..."
+    )
+
+    parser.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        required=False,
+        help="include all files, including hidden ones"
+    )
+
+    parser.add_argument(
+        "files",
+        nargs="*",
+        default=".",
+        type=str,
+        metavar="FILES",
+        help="the files or directories to display"
+    )
+
+    namespace = parser.parse_args()
+    return namespace
+
+
+def main():
+    args = process_args()
+
+    if args.all:
+        print("--all flag passed")
+
+    print(args.files)
+
+
+if __name__ == "__main__":
+    main()
+
