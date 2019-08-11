@@ -84,6 +84,36 @@ def process_args():
     return namespace
 
 
+def resolve_name(path):
+    """Resolves the name of the given path.
+
+    When using path.name to get the name of a file, pathlib returns an
+    empty string for cwd and root. To get around this, we need to
+    specify the proper names ourselves.
+
+    Parameters
+    ----------
+    path : pathlib.Path object
+        The path to resolve the name for.
+
+    Returns
+    -------
+    name : string
+        The resolved file name.
+
+    """
+
+    abspath = str(path.resolve())
+    if abspath == "/":
+        name = "/"
+    elif abspath == str(pathlib.Path.cwd()):
+        name = "."
+    else:
+        name = path.name
+
+    return name
+
+
 def print_file(path, tab_count):
     """Display information for a single file.
 
@@ -103,15 +133,9 @@ def print_file(path, tab_count):
     type_str = "\"type\": \"{}\"".format(TYPE_STRINGS[file_type])
     output_strings.append(type_str)
 
-    # For root and cwd, path.name returns an empty string.
-    # Thus, we need to manually enter the correct values.
-    abspath = str(path.resolve())
-    if abspath == "/":
-        name = "/"
-    elif abspath == str(pathlib.Path.cwd()):
-        name = "."
-    else:
-        name = path.name
+    name = path.name
+    if not name:
+        name = resolve_name(path)
 
     name_str = "\"name\": \"{}\"".format(name)
     output_strings.append(name_str)
