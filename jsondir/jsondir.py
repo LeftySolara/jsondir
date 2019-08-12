@@ -1,6 +1,7 @@
 import argparse
 import stat
 import pathlib
+import json
 from enum import Enum, unique, auto
 
 
@@ -114,86 +115,63 @@ def resolve_name(path):
     return name
 
 
-def print_file(path, indent_level):
-    """Display information for a single file.
+def get_file_info(path):
+    """Fetch information about a file.
 
     Parameters
     ----------
     path : pathlib.Path
-        The path to display information for.
+        The file to fetch info for.
 
-    tab_count : int
-        Number of tabs to insert for indentation.
+    Returns
+    -------
+    info : dict
+        Information found about the given file.
 
     """
 
-    output_strings = []
+    info = {}
 
-    file_type = FileType.get_file_type(path)
-    type_str = "\"type\": \"{}\"".format(TYPE_STRINGS[file_type])
-    output_strings.append(type_str)
-
-    name = path.name
-    if not name:
-        name = resolve_name(path)
-
-    name_str = "\"name\": \"{}\"".format(name)
-    output_strings.append(name_str)
+    info["name"] = resolve_name(path)
+    info["type"] = TYPE_STRINGS[FileType.get_file_type(path)]
 
     if path.is_symlink():
-        target_str = "\"target\": \"{}\"".format(path.resolve())
-        output_strings.append(target_str)
+        info["target"] = str(path.resolve())
 
-    for info_str in output_strings:
-        if info_str == output_strings[-1]:
-            print(" " * TAB_SIZE * indent_level + info_str)
-        else:
-            print(" " * TAB_SIZE * indent_level + info_str + ",")
+    return info
 
 
+def get_dir_info(path, include_hidden=False):
+    """Fetch information about a directory.
 
-def print_directory(path, indent_level,  show_hidden=False):
-    """Display information for each file in the given directory.
-    
     Parameters
     ----------
-    path : pathlib.Path object
-        The directory to show information for.
+    path : pathlib.Path
+        The directory to fetch info for.
 
-    indent_level : int
-        Number of tabs to insert before printing strings.
-        Note that this is for the braces; the file information
-        will be indented one level deeper.
+    include_hidden : bool
+        Whether to include children whose names begin with "."
 
-    show_hidden : bool
-        Whether to include files whose names start with "."
+    Returns
+    -------
+    info : dict
+        Information found about the given file.
 
     """
 
-    if show_hidden:
-        children = [child for child in path.iterdir()]
+    info = get_file_info(path)
+
+    if include_hidden:
+        children = [child.name for child in path.iterdir()]
     else:
-        children = [child for child in path.iterdir() if not child.name.startswith('.')]
+        children = [child.name for child in path.iterdir() if not child.name.startswith('.')]
 
-    children.sort(key=lambda child: child.name.lower().strip('.'))
+    if children:
+        children.sort(key=lambda child: child.lower().strip('.'))
+        info["children"] = children
 
-    print(" " * TAB_SIZE * indent_level + "{")
-    print_file(path, indent_level + 1)
+    return info
 
-    print(" " * TAB_SIZE * (indent_level + 1) + "\"children\": [")
-
-    for child in children:
-        print(" " * TAB_SIZE * (indent_level + 2) + "{")
-        print_file(child, indent_level + 3)
-
-        if child == children[-1]:
-            print(" " * TAB_SIZE * (indent_level + 2) + "}")
-        else:
-            print(" " * TAB_SIZE * (indent_level + 2) + "},")
-
-    print(" " * TAB_SIZE * (indent_level + 1) + "]")
-
-    print(" " * TAB_SIZE * indent_level + "}")
 
 def main():
     args = process_args()
@@ -201,13 +179,8 @@ def main():
     for filename in args.files:
         path = pathlib.Path(filename)
 
-        try:
-            if path.is_dir():
-                print_directory(path, 0, args.all)
-            else:
-                print_file(path, 0)
-        except FileNotFoundError:
-            print("{}: No such file or directory.".format(filename))
+        info = get_dir_info(path, args.all)
+        print(json.dumps(info, indent=4))
 
 
 if __name__ == "__main__":
