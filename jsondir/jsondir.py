@@ -114,7 +114,7 @@ def resolve_name(path):
     return name
 
 
-def print_file(path, tab_count):
+def print_file(path, indent_level):
     """Display information for a single file.
 
     Parameters
@@ -145,17 +145,26 @@ def print_file(path, tab_count):
         output_strings.append(target_str)
 
     for info_str in output_strings:
-        print(" " * TAB_SIZE * tab_count + info_str)
+        if info_str == output_strings[-1]:
+            print(" " * TAB_SIZE * indent_level + info_str)
+        else:
+            print(" " * TAB_SIZE * indent_level + info_str + ",")
 
 
-def print_directory(path, show_hidden=False):
+
+def print_directory(path, indent_level,  show_hidden=False):
     """Display information for each file in the given directory.
     
     Parameters
     ----------
     path : pathlib.Path object
         The directory to show information for.
-        
+
+    indent_level : int
+        Number of tabs to insert before printing strings.
+        Note that this is for the braces; the file information
+        will be indented one level deeper.
+
     show_hidden : bool
         Whether to include files whose names start with "."
 
@@ -168,10 +177,23 @@ def print_directory(path, show_hidden=False):
 
     children.sort(key=lambda child: child.name.lower().strip('.'))
 
-    for child in children:
-        print_file(child, 0)
-        print()
+    print(" " * TAB_SIZE * indent_level + "{")
+    print_file(path, indent_level + 1)
 
+    print(" " * TAB_SIZE * (indent_level + 1) + "\"children\": [")
+
+    for child in children:
+        print(" " * TAB_SIZE * (indent_level + 2) + "{")
+        print_file(child, indent_level + 3)
+
+        if child == children[-1]:
+            print(" " * TAB_SIZE * (indent_level + 2) + "}")
+        else:
+            print(" " * TAB_SIZE * (indent_level + 2) + "},")
+
+    print(" " * TAB_SIZE * (indent_level + 1) + "]")
+
+    print(" " * TAB_SIZE * indent_level + "}")
 
 def main():
     args = process_args()
@@ -180,13 +202,12 @@ def main():
         path = pathlib.Path(filename)
 
         try:
-            print()
             if path.is_dir():
-                print_directory(path, args.all)
+                print_directory(path, 0, args.all)
             else:
                 print_file(path, 0)
         except FileNotFoundError:
-            print("{}: No such file or directory.")
+            print("{}: No such file or directory.".format(filename))
 
 
 if __name__ == "__main__":
