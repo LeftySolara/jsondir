@@ -161,14 +161,17 @@ def get_dir_info(path, include_hidden=False):
 
     info = get_file_info(path)
 
+    if not path.is_dir():
+        return info
+
     if include_hidden:
-        children = [child.name for child in path.iterdir()]
+        children = [child for child in path.iterdir()]
     else:
-        children = [child.name for child in path.iterdir() if not child.name.startswith('.')]
+        children = [child for child in path.iterdir() if not child.name.startswith('.')]
 
     if children:
-        children.sort(key=lambda child: child.lower().strip('.'))
-        info["children"] = children
+        children.sort(key=lambda child: child.name.lower().strip('.'))
+        info["children"] = [get_dir_info(child) for child in children]
 
     return info
 
