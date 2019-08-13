@@ -73,6 +73,14 @@ def process_args():
     )
 
     parser.add_argument(
+        "-d",
+        "--depth",
+        default=1,
+        type=int,
+        help="descend only depth directories deep"
+    )
+
+    parser.add_argument(
         "files",
         nargs="*",
         default=".",
@@ -141,7 +149,7 @@ def get_file_info(path):
     return info
 
 
-def get_dir_info(path, include_hidden=False):
+def get_dir_info(path, limit, include_hidden=False, depth=0):
     """Fetch information about a directory.
 
     Parameters
@@ -149,8 +157,14 @@ def get_dir_info(path, include_hidden=False):
     path : pathlib.Path
         The directory to fetch info for.
 
+    limit : int
+        Maximum recursion depth when getting info for child directories.
+
     include_hidden : bool
         Whether to include children whose names begin with "."
+
+    depth : int
+        Counter for recursion depth.
 
     Returns
     -------
@@ -159,7 +173,11 @@ def get_dir_info(path, include_hidden=False):
 
     """
 
+
     info = get_file_info(path)
+
+    if depth > limit:
+        return info
 
     if not path.is_dir():
         return info
@@ -171,7 +189,8 @@ def get_dir_info(path, include_hidden=False):
 
     if children:
         children.sort(key=lambda child: child.name.lower().strip('.'))
-        info["children"] = [get_dir_info(child) for child in children]
+        depth += 1
+        info["children"] = [get_dir_info(child, limit, include_hidden, depth+1) for child in children]
 
     return info
 
@@ -182,7 +201,7 @@ def main():
     for filename in args.files:
         path = pathlib.Path(filename)
 
-        info = get_dir_info(path, args.all)
+        info = get_dir_info(path, args.depth, args.all)
         print(json.dumps(info, indent=4))
 
 
