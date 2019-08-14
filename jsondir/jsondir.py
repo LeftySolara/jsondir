@@ -81,6 +81,14 @@ def process_args():
     )
 
     parser.add_argument(
+        "-f",
+        "--follow-symlinks",
+        action="store_true",
+        required=False,
+        help="follow symlinks like directories"
+    )
+
+    parser.add_argument(
         "files",
         nargs="*",
         default=".",
@@ -149,7 +157,7 @@ def get_file_info(path):
     return info
 
 
-def get_dir_info(path, limit, include_hidden=False, depth=0):
+def get_dir_info(path, limit, include_hidden=False, follow_links=False, depth=0):
     """Fetch information about a directory.
 
     Parameters
@@ -162,6 +170,9 @@ def get_dir_info(path, limit, include_hidden=False, depth=0):
 
     include_hidden : bool
         Whether to include children whose names begin with "."
+
+    follow_links: bool
+        Whether to follow symlinks to directories.
 
     depth : int
         Counter for recursion depth.
@@ -176,11 +187,11 @@ def get_dir_info(path, limit, include_hidden=False, depth=0):
 
     info = get_file_info(path)
 
-    if depth > limit:
+    if not path.is_dir() or depth > limit:
+        return info
+    if not follow_links and path.is_symlink():
         return info
 
-    if not path.is_dir():
-        return info
 
     if include_hidden:
         children = [child for child in path.iterdir()]
@@ -190,7 +201,8 @@ def get_dir_info(path, limit, include_hidden=False, depth=0):
     if children:
         children.sort(key=lambda child: child.name.lower().strip('.'))
         depth += 1
-        info["children"] = [get_dir_info(child, limit, include_hidden, depth+1) for child in children]
+        info["children"] = [get_dir_info(child, limit, include_hidden, follow_links, depth+1)
+                            for child in children]
 
     return info
 
@@ -201,7 +213,7 @@ def main():
     for filename in args.files:
         path = pathlib.Path(filename)
 
-        info = get_dir_info(path, args.depth, args.all)
+        info = get_dir_info(path, args.depth, args.all, args.follow_symlinks)
         print(json.dumps(info, indent=4))
 
 
