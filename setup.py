@@ -15,7 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     entry_points={
         "console_scripts": [
-            "jsondir=jsondir:main"
+            "jsondir=jsondir.jsondir:main"
         ],
     },
     classifiers=[
