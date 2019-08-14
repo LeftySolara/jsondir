@@ -1,11 +1,8 @@
 import argparse
-import stat
-import pathlib
 import json
-from enum import Enum, unique, auto
-
-
-TAB_SIZE = 4
+import pathlib
+import stat
+from enum import Enum, auto, unique
 
 
 @unique
@@ -47,8 +44,7 @@ TYPE_STRINGS = {
 
 
 def process_args():
-    """
-    Specify and parse command line arguments.
+    """Specify and parse command line arguments.
 
     Returns
     -------
@@ -59,8 +55,7 @@ def process_args():
 
     parser = argparse.ArgumentParser(
         prog="jsondir",
-        description="Display directory structure in JSON format" \
-            " or create directory structure from JSON file.",
+        description="Display directory structure in JSON format",
         usage="%(prog)s [OPTION]... [FILE]..."
     )
 
@@ -184,7 +179,6 @@ def get_dir_info(path, limit, include_hidden=False, follow_links=False, depth=0)
 
     """
 
-
     info = get_file_info(path)
 
     if not path.is_dir() or depth > limit:
@@ -214,7 +208,7 @@ def main():
         path = pathlib.Path(filename)
 
         info = get_dir_info(path, args.depth, args.all, args.follow_symlinks)
-        print(json.dumps(info, indent=4))
+        print(json.dumps(info, indent=2))
 
 
 if __name__ == "__main__":
